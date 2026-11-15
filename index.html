@@ -71,7 +71,6 @@ select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:
   ※当サイトはYouTube（Google LLC）の公式サービスではありません。YouTubeの公式埋め込みプレイヤー機能を利用した個人制作の非公式ツールです。
 </footer>
 
-<script src="https://www.youtube.com/iframe_api"></script>
 <script>
 const $=x=>document.getElementById(x);
 let list=JSON.parse(localStorage.getItem('officialPickerChannels')||'[]');
@@ -79,9 +78,21 @@ let selected=null;
 let player=null;
 let apiReady=false;
 
-function onYouTubeIframeAPIReady(){
+// YouTube APIの準備完了を確実に検知する
+window.onYouTubeIframeAPIReady=function(){
  apiReady=true;
-}
+};
+
+// すでにAPIスクリプトが読み込み済みの場合の対策＆動的ロード
+(function loadYTApi(){
+ if(window.YT && window.YT.Player){
+  apiReady=true;
+  return;
+ }
+ const tag=document.createElement('script');
+ tag.src='https://www.youtube.com/iframe_api';
+ document.head.appendChild(tag);
+})();
 
 function save(){localStorage.setItem('officialPickerChannels',JSON.stringify(list));render();}
 function render(){
@@ -136,6 +147,7 @@ function toUploadsPlaylistId(ucId){
 
 function pickRandomVideo(){
  if(!selected)return;
+ if(window.YT && window.YT.Player) apiReady=true;
  if(!apiReady){
   $('pickstatus').textContent='YouTubeプレイヤーを読み込み中です。1秒後にもう一度押してください。';
   return;
