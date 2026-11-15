@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YouTube Random Picker (Official Player版)</title>
+<title>Random Picker for YouTube</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#202943;font-family:system-ui,sans-serif}
 header{background:linear-gradient(130deg,#293d8c,#7185ff);color:#fff;padding:32px 18px}
@@ -25,7 +25,7 @@ select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:
 @media(max-width:540px){.row{flex-direction:column}.row button{width:100%}.card{padding:16px}}
 </style></head>
 <body>
-<header><div class="wrap"><div style="font-size:11px;letter-spacing:.18em;font-weight:700;opacity:.8">YOUR NEXT VIDEO, RANDOMLY.</div><h1>YouTube Random Picker</h1><p>公式プレイヤーを使って、チャンネルの全動画からランダムに抽選！</p></div></header>
+<header><div class="wrap"><div style="font-size:11px;letter-spacing:.18em;font-weight:700;opacity:.8">YOUR NEXT VIDEO, RANDOMLY.</div><h1>Random Picker for YouTube</h1><p>公式プレイヤーを使って、チャンネルの全動画からランダムに抽選！</p></div></header>
 <main class="wrap">
 <section class="card">
 <h2>01　チャンネルを登録</h2>
@@ -67,6 +67,10 @@ select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:
 </section>
 </main>
 
+<footer style="text-align: center; margin-top: 40px; padding: 20px; font-size: 12px; color: #888;">
+  ※当サイトはYouTube（Google LLC）の公式サービスではありません。YouTubeの公式埋め込みプレイヤー機能を利用した個人制作の非公式ツールです。
+</footer>
+
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
 const $=x=>document.getElementById(x);
@@ -74,7 +78,6 @@ let list=JSON.parse(localStorage.getItem('officialPickerChannels')||'[]');
 let selected=null;
 let player=null;
 let apiReady=false;
-let currentPlaylistSize=0;
 
 function onYouTubeIframeAPIReady(){
  apiReady=true;
@@ -157,7 +160,6 @@ function pickRandomVideo(){
    events: {
     onReady: (e)=>{
      e.target.setShuffle(true);
-     // シャッフルを有効にしてランダム位置へジャンプ
      setTimeout(()=>{
       const pl=e.target.getPlaylist();
       if(pl && pl.length){
@@ -179,7 +181,6 @@ function pickRandomVideo(){
    }
   });
  }else{
-  // すでにプレイヤーがある場合は新しい再生リストをロードしてランダム再生
   player.loadPlaylist({
    listType: 'playlist',
    list: playlistId,
