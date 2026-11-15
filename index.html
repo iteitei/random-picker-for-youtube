@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YouTube Random Picker (Official Player版)</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#202943;font-family:system-ui,sans-serif}
+header{background:linear-gradient(130deg,#293d8c,#7185ff);color:#fff;padding:32px 18px}
+.wrap{max-width:850px;margin:auto;padding:0 16px}h1{margin:5px 0;font-size:clamp(25px,5vw,36px)}header p{margin:0;color:#e8ebff}
+main{padding:24px 0}.card{background:#fff;border:1px solid #e4e8f1;border-radius:17px;padding:20px;margin-bottom:16px;box-shadow:0 5px 20px #24345a08}
+h2{font-size:17px;margin:0 0 13px}input{width:100%;padding:13px;border:1px solid #d5dceb;border-radius:10px;font:inherit}
+button{border:0;border-radius:10px;padding:12px 17px;background:#536dfe;color:white;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.45}
+.row{display:flex;gap:9px}.row input{flex:1;min-width:0}.hint{font-size:13px;color:#748098;line-height:1.65;margin-top:9px}
+.channel{display:flex;align-items:center;gap:10px;padding:10px;background:#f0f2ff;border-radius:11px;margin-top:12px}.channel span{flex:1;overflow-wrap:anywhere;font-weight:650}.channel button{background:#fff;color:#4557c9;padding:8px 11px}
+select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:inherit;margin-bottom:10px;background:white}
+.player-wrap{display:none;margin-top:16px;border:1px solid #e4e8f1;border-radius:14px;overflow:hidden;background:#000}
+.ratio{position:relative;width:100%;padding-top:56.25%}
+.ratio iframe, .ratio #ytplayer{position:absolute;top:0;left:0;width:100%;height:100%}
+.vbody{padding:15px;background:#fff}
+.vbody h3{margin:0 0 8px;font-size:18px;color:#202943}
+.vbody a{display:inline-block;padding:10px 16px;background:#ff0033;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px}
+.btn-sub{background:#edf0ff;color:#4053bd;margin-left:8px}
+.status{font-size:13px;color:#66738b;margin-top:10px;min-height:20px}.small{font-size:12px;color:#748098;line-height:1.7}
+.id-guide{background:#f8f9fc;border:1px solid #e4e8f1;border-radius:10px;padding:12px;margin-top:12px;font-size:12.5px;color:#4a5568;line-height:1.6}
+@media(max-width:540px){.row{flex-direction:column}.row button{width:100%}.card{padding:16px}}
+</style></head>
+<body>
+<header><div class="wrap"><div style="font-size:11px;letter-spacing:.18em;font-weight:700;opacity:.8">YOUR NEXT VIDEO, RANDOMLY.</div><h1>YouTube Random Picker</h1><p>公式プレイヤーを使って、チャンネルの全動画からランダムに抽選！</p></div></header>
+<main class="wrap">
+<section class="card">
+<h2>01　チャンネルを登録</h2>
+<div style="display:flex;flex-direction:column;gap:9px">
+ <input id="cname" placeholder="表示名（例：ヒカキン / 好きな名前）">
+ <div class="row">
+  <input id="cid" placeholder="チャンネルID（UCから始まる24文字）または /channel/UC... URL">
+  <button id="add">追加</button>
+ </div>
+</div>
+<div class="id-guide">
+ <b>チャンネルID（UC...）の確認方法：</b><br>
+ YouTubeでチャンネルページを開く → 概要欄の「さらに表示」→ 一番下の<b>「チャンネルを共有」→「チャンネルIDをコピー」</b>で <code>UC...</code> から始まるIDを取得できます。
+</div>
+<div id="added"></div><div id="status" class="status"></div>
+</section>
+
+<section class="card">
+<h2>02　チャンネルを選択してランダム抽選</h2>
+<select id="channels"><option value="">チャンネルを選択</option></select>
+<button id="pick" disabled>ランダムで選ぶ！</button>
+<div id="pickstatus" class="status">チャンネルを選んでね。</div>
+
+<div id="video" class="player-wrap">
+ <div class="ratio"><div id="ytplayer"></div></div>
+ <div class="vbody">
+  <h3 id="title">動画を取得中...</h3>
+  <div id="channelname" class="small" style="margin-bottom:12px"></div>
+  <div>
+   <a id="link" target="_blank" rel="noopener">YouTubeアプリ / 別タブで見る ↗</a>
+   <button id="again" class="btn-sub">もう一回ランダム！</button>
+  </div>
+ </div>
+</div>
+</section>
+
+<section class="card"><h2>この方式のメリット</h2>
+<div class="small">外部のプロキシサーバーを一切経由せず、YouTube公式の埋め込みプレイヤー機能（全アップロード再生リスト <code>UU...</code>）を直接使います。<br>そのため通信ブロックによるエラーが起きず、最新15本だけでなく<b>チャンネルの過去動画全体からランダムに選ばれる</b>のが特徴です。</div>
+</section>
+</main>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+const $=x=>document.getElementById(x);
+let list=JSON.parse(localStorage.getItem('officialPickerChannels')||'[]');
+let selected=null;
+let player=null;
+let apiReady=false;
+let currentPlaylistSize=0;
+
+function onYouTubeIframeAPIReady(){
+ apiReady=true;
+}
+
+function save(){localStorage.setItem('officialPickerChannels',JSON.stringify(list));render();}
+function render(){
+ $('added').innerHTML='';
+ $('channels').innerHTML='<option value="">チャンネルを選択</option>';
+ list.forEach((c,i)=>{
+  let div=document.createElement('div');div.className='channel';
+  let span=document.createElement('span');span.textContent=`${c.name} (${c.id})`;
+  let del=document.createElement('button');del.textContent='削除';del.onclick=()=>{list.splice(i,1);save();};
+  div.append(span,del);$('added').append(div);
+  let op=document.createElement('option');op.value=c.id;op.textContent=c.name;$('channels').append(op);
+ });
+}
+
+function extractChannelId(s){
+ s=s.trim();
+ const m=s.match(/(UC[\w-]{22})/);
+ return m?m[1]:null;
+}
+
+$('add').onclick=()=>{
+ const rawId=$('cid').value;
+ const id=extractChannelId(rawId);
+ if(!id){
+  $('status').textContent='UCから始まる24文字のチャンネルIDを入力してください。';
+  return;
+ }
+ if(list.some(x=>x.id===id)){
+  $('status').textContent='このチャンネルはすでに登録済みです。';
+  return;
+ }
+ const name=$('cname').value.trim() || id;
+ list.push({id, name});
+ save();
+ $('cname').value='';
+ $('cid').value='';
+ $('status').textContent=`「${name}」を登録しました！`;
+};
+
+$('channels').onchange=()=>{
+ $('pick').disabled=!$('channels').value;
+ selected=list.find(x=>x.id===$('channels').value)||null;
+ $('video').style.display='none';
+ if(player && player.stopVideo) player.stopVideo();
+ $('pickstatus').textContent=selected?`「${selected.name}」のアップロード動画からランダムに選びます。`:'チャンネルを選んでね。';
+};
+
+// UC... を UU... (全アップロード動画の公式再生リストID) に変換
+function toUploadsPlaylistId(ucId){
+ return 'UU' + ucId.slice(2);
+}
+
+function pickRandomVideo(){
+ if(!selected)return;
+ if(!apiReady){
+  $('pickstatus').textContent='YouTubeプレイヤーを読み込み中です。1秒後にもう一度押してください。';
+  return;
+ }
+
+ const playlistId=toUploadsPlaylistId(selected.id);
+ $('video').style.display='block';
+ $('title').textContent='動画を抽選中…';
+ $('channelname').textContent=selected.name;
+ $('pickstatus').textContent='公式再生リストからランダムに取得中…';
+
+ if(!player){
+  player=new YT.Player('ytplayer', {
+   height: '360',
+   width: '640',
+   playerVars: {
+    listType: 'playlist',
+    list: playlistId,
+    autoplay: 1,
+    rel: 0
+   },
+   events: {
+    onReady: (e)=>{
+     e.target.setShuffle(true);
+     // シャッフルを有効にしてランダム位置へジャンプ
+     setTimeout(()=>{
+      const pl=e.target.getPlaylist();
+      if(pl && pl.length){
+       const idx=Math.floor(Math.random()*pl.length);
+       e.target.playVideoAt(idx);
+      }else{
+       e.target.nextVideo();
+      }
+     }, 600);
+    },
+    onStateChange: (e)=>{
+     if(e.data===YT.PlayerState.PLAYING || e.data===YT.PlayerState.CUED || e.data===YT.PlayerState.PAUSED){
+      updateVideoInfo();
+     }
+    },
+    onError: (e)=>{
+     $('pickstatus').textContent='再生エラー（コード:'+e.data+'）。チャンネルIDが正しいか、公開動画があるか確認してください。';
+    }
+   }
+  });
+ }else{
+  // すでにプレイヤーがある場合は新しい再生リストをロードしてランダム再生
+  player.loadPlaylist({
+   listType: 'playlist',
+   list: playlistId,
+   index: 0
+  });
+  setTimeout(()=>{
+   player.setShuffle(true);
+   const pl=player.getPlaylist();
+   if(pl && pl.length){
+    const idx=Math.floor(Math.random()*pl.length);
+    player.playVideoAt(idx);
+   }else{
+    player.nextVideo();
+   }
+   setTimeout(updateVideoInfo, 500);
+  }, 800);
+ }
+}
+
+function updateVideoInfo(){
+ if(!player || !player.getVideoData)return;
+ const data=player.getVideoData();
+ const pl=player.getPlaylist();
+ if(data && data.video_id){
+  $('title').textContent=data.title || 'タイトル取得済み';
+  $('link').href=`https://www.youtube.com/watch?v=${data.video_id}`;
+  const countText=pl ? `全 ${pl.length} 本の中からランダムに選ばれました！` : 'ランダムに選ばれました！';
+  $('pickstatus').textContent=countText;
+ }
+}
+
+$('pick').onclick=pickRandomVideo;
+$('again').onclick=()=>{
+ if(!player)return;
+ const pl=player.getPlaylist();
+ if(pl && pl.length){
+  const idx=Math.floor(Math.random()*pl.length);
+  player.playVideoAt(idx);
+ }else{
+  player.nextVideo();
+ }
+ setTimeout(updateVideoInfo, 500);
+};
+
+render();
+</script></body></html>
