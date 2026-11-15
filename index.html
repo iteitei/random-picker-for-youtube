@@ -6,39 +6,36 @@
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#202943;font-family:system-ui,sans-serif}
 header{background:linear-gradient(130deg,#293d8c,#7185ff);color:#fff;padding:32px 18px}
-.wrap{max-width:850px;margin:auto;padding:0 16px}h1{margin:5px 0;font-size:clamp(25px,5vw,36px)}header p{margin:0;color:#e8ebff}
+.wrap{max-width:850px;margin:auto;padding:0 16px}h1{margin:5px 0;font-size:clamp(25px,5vw,36px)}
 main{padding:24px 0}.card{background:#fff;border:1px solid #e4e8f1;border-radius:17px;padding:20px;margin-bottom:16px;box-shadow:0 5px 20px #24345a08}
-h2{font-size:17px;margin:0 0 13px}input{width:100%;padding:13px;border:1px solid #d5dceb;border-radius:10px;font:inherit}
-button{border:0;border-radius:10px;padding:12px 17px;background:#536dfe;color:white;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.45}
-.row{display:flex;gap:9px}.row input{flex:1;min-width:0}.hint{font-size:13px;color:#748098;line-height:1.65;margin-top:9px}
+h2{font-size:17px;margin:0 0 13px}input[type="text"]{width:100%;padding:13px;border:1px solid #d5dceb;border-radius:10px;font:inherit}
+button{border:0;border-radius:10px;padding:12px 17px;background:#536dfe;color:white;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:9px}.row input{flex:1;min-width:0}
 .channel{display:flex;align-items:center;gap:10px;padding:10px;background:#f0f2ff;border-radius:11px;margin-top:12px}.channel span{flex:1;overflow-wrap:anywhere;font-weight:650}.channel button{background:#fff;color:#4557c9;padding:8px 11px}
-select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:inherit;margin-bottom:10px;background:white}
+select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:inherit;margin-bottom:12px;background:white}
+.opt-box{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:14px;padding:12px;background:#f8f9fc;border:1px solid #e4e8f1;border-radius:10px;font-size:14px}
+.opt-box label{display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#2c3859}
+.opt-box select{width:auto;margin:0;padding:6px 10px;font-size:13px}
 .player-wrap{display:none;margin-top:16px;border:1px solid #e4e8f1;border-radius:14px;overflow:hidden;background:#000}
 .ratio{position:relative;width:100%;padding-top:56.25%}
-.ratio iframe, .ratio #ytplayer{position:absolute;top:0;left:0;width:100%;height:100%}
+.ratio iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
 .vbody{padding:15px;background:#fff}
-.vbody h3{margin:0 0 8px;font-size:18px;color:#202943}
+.vbody h3{margin:0 0 6px;font-size:18px;color:#202943;line-height:1.4}
+.meta{font-size:12.5px;color:#66738b;margin-bottom:12px}
 .vbody a{display:inline-block;padding:10px 16px;background:#ff0033;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px}
 .btn-sub{background:#edf0ff;color:#4053bd;margin-left:8px}
-.status{font-size:13px;color:#66738b;margin-top:10px;min-height:20px}.small{font-size:12px;color:#748098;line-height:1.7}
-.id-guide{background:#f8f9fc;border:1px solid #e4e8f1;border-radius:10px;padding:12px;margin-top:12px;font-size:12.5px;color:#4a5568;line-height:1.6}
+.status{font-size:13px;color:#66738b;margin-top:10px;min-height:20px;line-height:1.5}
 @media(max-width:540px){.row{flex-direction:column}.row button{width:100%}.card{padding:16px}}
 </style></head>
 <body>
 <header><div class="wrap"><div style="font-size:11px;letter-spacing:.18em;font-weight:700;opacity:.8">YOUR NEXT VIDEO, RANDOMLY.</div><h1>Random Picker for YouTube</h1></div></header>
 <main class="wrap">
+
 <section class="card">
 <h2>01 チャンネルを登録</h2>
-<div style="display:flex;flex-direction:column;gap:9px">
- <input id="cname" placeholder="表示名（例：ヒカキン / 好きな名前）">
- <div class="row">
-  <input id="cid" placeholder="チャンネルID（UCから始まる24文字）または /channel/UC... URL">
-  <button id="add">追加</button>
- </div>
-</div>
-<div class="id-guide">
- <b>チャンネルID（UC...）の確認方法：</b><br>
- YouTubeでチャンネルページを開く → 概要欄の「さらに表示」→ 一番下の<b>「チャンネルを共有」→「チャンネルIDをコピー」</b>で <code>UC...</code> から始まるIDを取得できます。
+<div class="row">
+ <input type="text" id="cinput" placeholder="@ハンドル名、チャンネルURL、またはチャンネルID（UC...）">
+ <button id="add">検索して追加</button>
 </div>
 <div id="added"></div><div id="status" class="status"></div>
 </section>
@@ -46,14 +43,26 @@ select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:
 <section class="card">
 <h2>02 チャンネルを選択してランダム抽選</h2>
 <select id="channels"><option value="">チャンネルを選択</option></select>
+
+<div class="opt-box">
+ <label><input type="checkbox" id="exshorts" checked> Shortsを除外する（通常動画のみ）</label>
+ <label>取得上限:
+  <select id="maxfetch">
+   <option value="500">最新 500本まで</option>
+   <option value="1500" selected>最新 1,500本まで</option>
+   <option value="5000">全動画（最大 5,000本）</option>
+  </select>
+ </label>
+</div>
+
 <button id="pick" disabled>ランダムで選ぶ！</button>
 <div id="pickstatus" class="status">チャンネルを選んでね。</div>
 
 <div id="video" class="player-wrap">
- <div class="ratio"><div id="ytplayer"></div></div>
+ <div class="ratio"><iframe id="ytframe" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
  <div class="vbody">
-  <h3 id="title">動画を取得中...</h3>
-  <div id="channelname" class="small" style="margin-bottom:12px"></div>
+  <h3 id="title">動画タイトル</h3>
+  <div id="meta" class="meta"></div>
   <div>
    <a id="link" target="_blank" rel="noopener">YouTubeアプリ / 別タブで見る ↗</a>
    <button id="again" class="btn-sub">もう一回ランダム！</button>
@@ -62,180 +71,227 @@ select{width:100%;padding:12px;border:1px solid #d5dceb;border-radius:10px;font:
 </div>
 </section>
 
-<section class="card"><h2>この方式のメリット</h2>
-<div class="small">外部のプロキシサーバーを一切経由せず、YouTube公式の埋め込みプレイヤー機能（全アップロード再生リスト <code>UU...</code>）を直接使います。<br>そのため通信ブロックによるエラーが起きず、最新15本だけでなく<b>チャンネルの過去動画全体からランダムに選ばれる</b>のが特徴です。</div>
-</section>
 </main>
 
 <footer style="text-align: center; margin-top: 40px; padding: 20px; font-size: 12px; color: #888;">
-  ※当サイトはYouTube（Google LLC）の公式サービスではありません。YouTubeの公式埋め込みプレイヤー機能を利用した個人制作の非公式ツールです。
+  ※当サイトはYouTube（Google LLC）の公式サービスではありません。YouTube Data API v3 および公式埋め込みプレイヤー機能を利用した個人制作の非公式ツールです。
 </footer>
 
 <script>
+const API_KEY = 'AIzaSyDckkWYMtIZaaZKYktI7FqXbY2L9VCHBEQ';
+
 const $=x=>document.getElementById(x);
-let list=JSON.parse(localStorage.getItem('officialPickerChannels')||'[]');
+let list=JSON.parse(localStorage.getItem('apiPickerChannels')||'[]');
 let selected=null;
-let player=null;
-let apiReady=false;
+let videoCache={};
 
-// YouTube APIの準備完了を確実に検知する
-window.onYouTubeIframeAPIReady=function(){
- apiReady=true;
-};
-
-// すでにAPIスクリプトが読み込み済みの場合の対策＆動的ロード
-(function loadYTApi(){
- if(window.YT && window.YT.Player){
-  apiReady=true;
-  return;
- }
- const tag=document.createElement('script');
- tag.src='https://www.youtube.com/iframe_api';
- document.head.appendChild(tag);
-})();
-
-function save(){localStorage.setItem('officialPickerChannels',JSON.stringify(list));render();}
+function saveList(){localStorage.setItem('apiPickerChannels',JSON.stringify(list));render();}
 function render(){
  $('added').innerHTML='';
  $('channels').innerHTML='<option value="">チャンネルを選択</option>';
  list.forEach((c,i)=>{
   let div=document.createElement('div');div.className='channel';
   let span=document.createElement('span');span.textContent=`${c.name} (${c.id})`;
-  let del=document.createElement('button');del.textContent='削除';del.onclick=()=>{list.splice(i,1);save();};
+  let del=document.createElement('button');del.textContent='削除';del.onclick=()=>{
+   delete videoCache[c.id];
+   list.splice(i,1);
+   saveList();
+  };
   div.append(span,del);$('added').append(div);
   let op=document.createElement('option');op.value=c.id;op.textContent=c.name;$('channels').append(op);
  });
 }
 
-function extractChannelId(s){
- s=s.trim();
- const m=s.match(/(UC[\w-]{22})/);
- return m?m[1]:null;
+async function resolveChannel(input){
+ if(!API_KEY) throw new Error('APIキーが設定されていません。');
+ input=input.trim();
+ let url='';
+
+ const ucMatch=input.match(/(UC[\w-]{22})/);
+ const handleMatch=input.match(/@([\w.-]+)/);
+
+ if(ucMatch){
+  url=`https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&id=${ucMatch[1]}&key=${API_KEY}`;
+ }else if(handleMatch){
+  url=`https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&forHandle=${encodeURIComponent(handleMatch[1])}&key=${API_KEY}`;
+ }else{
+  const searchRes=await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(input)}&key=${API_KEY}`);
+  const searchData=await searchRes.json();
+  if(searchData.error) throw new Error(dataErrorMsg(searchData.error));
+  if(!searchData.items || !searchData.items.length) throw new Error('チャンネルが見つかりませんでした。@ハンドル名やUCから始まるIDを試してください。');
+  const foundId=searchData.items[0].snippet.channelId;
+  url=`https://www.googleapis.com/youtube/v3/channels?part=snippet,contentDetails&id=${foundId}&key=${API_KEY}`;
+ }
+
+ const res=await fetch(url);
+ const data=await res.json();
+ if(data.error) throw new Error(dataErrorMsg(data.error));
+ if(!data.items || !data.items.length) throw new Error('チャンネルが見つかりませんでした。入力内容を確認してください。');
+
+ const ch=data.items[0];
+ return {
+  id: ch.id,
+  name: ch.snippet.title,
+  uploadsId: ch.contentDetails.relatedPlaylists.uploads
+ };
 }
 
-$('add').onclick=()=>{
- const rawId=$('cid').value;
- const id=extractChannelId(rawId);
- if(!id){
-  $('status').textContent='UCから始まる24文字のチャンネルIDを入力してください。';
-  return;
+function dataErrorMsg(err){
+ if(err.code===403) return 'APIキーの制限エラー（URL制限の反映待ち等）、または本日の無料枠上限に達しました。';
+ if(err.code===400) return 'APIキーの文字列が正しくない可能性があります（Iとlの打ち間違いなど）。';
+ return err.message;
+}
+
+$('add').onclick=async()=>{
+ const raw=$('cinput').value;
+ if(!raw.trim()) return;
+ $('add').disabled=true;
+ $('status').textContent='チャンネルを検索中…';
+ try{
+  const info=await resolveChannel(raw);
+  if(list.some(x=>x.id===info.id)){
+   $('status').textContent=`「${info.name}」はすでに登録済みです。`;
+  }else{
+   list.push(info);
+   saveList();
+   $('cinput').value='';
+   $('status').textContent=`「${info.name}」を登録しました！`;
+  }
+ }catch(e){
+  $('status').textContent='エラー: '+e.message;
+ }finally{
+  $('add').disabled=false;
  }
- if(list.some(x=>x.id===id)){
-  $('status').textContent='このチャンネルはすでに登録済みです。';
-  return;
- }
- const name=$('cname').value.trim() || id;
- list.push({id, name});
- save();
- $('cname').value='';
- $('cid').value='';
- $('status').textContent=`「${name}」を登録しました！`;
 };
 
 $('channels').onchange=()=>{
  $('pick').disabled=!$('channels').value;
  selected=list.find(x=>x.id===$('channels').value)||null;
  $('video').style.display='none';
- if(player && player.stopVideo) player.stopVideo();
- $('pickstatus').textContent=selected?`「${selected.name}」のアップロード動画からランダムに選びます。`:'チャンネルを選んでね。';
+ $('ytframe').src='';
+ $('pickstatus').textContent=selected?`「${selected.name}」の動画からランダムに選びます。`:'チャンネルを選んでね。';
 };
 
-// UC... を UU... (全アップロード動画の公式再生リストID) に変換
-function toUploadsPlaylistId(ucId){
- return 'UU' + ucId.slice(2);
+function parseDuration(iso){
+ const m=iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+ if(!m) return 0;
+ return (parseInt(m[1]||0)*3600)+(parseInt(m[2]||0)*60)+parseInt(m[3]||0);
 }
 
-function pickRandomVideo(){
- if(!selected)return;
- if(window.YT && window.YT.Player) apiReady=true;
- if(!apiReady){
-  $('pickstatus').textContent='YouTubeプレイヤーを読み込み中です。1秒後にもう一度押してください。';
-  return;
- }
+async function fetchAllChannelVideos(channel, maxLimit){
+ if(!API_KEY) throw new Error('APIキーが設定されていません。');
 
- const playlistId=toUploadsPlaylistId(selected.id);
- $('video').style.display='block';
- $('title').textContent='動画を抽選中…';
- $('channelname').textContent=selected.name;
- $('pickstatus').textContent='公式再生リストからランダムに取得中…';
+ const cacheKey=`${channel.id}_${maxLimit}`;
+ if(videoCache[cacheKey]) return videoCache[cacheKey];
 
- if(!player){
-  player=new YT.Player('ytplayer', {
-   height: '360',
-   width: '640',
-   playerVars: {
-    listType: 'playlist',
-    list: playlistId,
-    autoplay: 1,
-    rel: 0
-   },
-   events: {
-    onReady: (e)=>{
-     e.target.setShuffle(true);
-     setTimeout(()=>{
-      const pl=e.target.getPlaylist();
-      if(pl && pl.length){
-       const idx=Math.floor(Math.random()*pl.length);
-       e.target.playVideoAt(idx);
-      }else{
-       e.target.nextVideo();
-      }
-     }, 600);
-    },
-    onStateChange: (e)=>{
-     if(e.data===YT.PlayerState.PLAYING || e.data===YT.PlayerState.CUED || e.data===YT.PlayerState.PAUSED){
-      updateVideoInfo();
-     }
-    },
-    onError: (e)=>{
-     $('pickstatus').textContent='再生エラー（コード:'+e.data+'）。チャンネルIDが正しいか、公開動画があるか確認してください。';
-    }
+ let videoItems=[];
+ let nextPageToken='';
+ let fetchedCount=0;
+
+ while(fetchedCount < maxLimit){
+  $('pickstatus').textContent=`動画リストを取得中…（現在 ${videoItems.length} 本読み込み済み）`;
+  const pageUrl=`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${channel.uploadsId}&maxResults=50&pageToken=${nextPageToken}&key=${API_KEY}`;
+  const res=await fetch(pageUrl);
+  const data=await res.json();
+  if(data.error) throw new Error(dataErrorMsg(data.error));
+
+  for(const item of (data.items||[])){
+   const vid=item.snippet?.resourceId?.videoId;
+   if(vid){
+    videoItems.push({
+     id: vid,
+     title: item.snippet.title,
+     publishedAt: item.snippet.publishedAt
+    });
    }
-  });
- }else{
-  player.loadPlaylist({
-   listType: 'playlist',
-   list: playlistId,
-   index: 0
-  });
-  setTimeout(()=>{
-   player.setShuffle(true);
-   const pl=player.getPlaylist();
-   if(pl && pl.length){
-    const idx=Math.floor(Math.random()*pl.length);
-    player.playVideoAt(idx);
-   }else{
-    player.nextVideo();
-   }
-   setTimeout(updateVideoInfo, 500);
-  }, 800);
+  }
+  fetchedCount += (data.items||[]).length;
+  nextPageToken=data.nextPageToken||'';
+  if(!nextPageToken) break;
+ }
+
+ if(!videoItems.length) throw new Error('公開動画が見つかりませんでした。');
+
+ const enriched=[];
+ for(let i=0; i<videoItems.length; i+=50){
+  $('pickstatus').textContent=`動画の長さ（Shorts判定）を確認中…（${Math.min(i+50, videoItems.length)} / ${videoItems.length} 本）`;
+  const chunk=videoItems.slice(i, i+50);
+  const ids=chunk.map(v=>v.id).join(',');
+  const vRes=await fetch(`https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=${ids}&key=${API_KEY}`);
+  const vData=await vRes.json();
+  if(vData.error) throw new Error(dataErrorMsg(vData.error));
+
+  const map={};
+  for(const v of (vData.items||[])){
+   map[v.id]={
+    duration: parseDuration(v.contentDetails?.duration||''),
+    title: v.snippet?.title||'',
+    publishedAt: v.snippet?.publishedAt||''
+   };
+  }
+
+  for(const item of chunk){
+   const detail=map[item.id];
+   if(!detail) continue;
+   const isShort = detail.duration <= 61 || /#shorts?\b/i.test(detail.title);
+   enriched.push({
+    id: item.id,
+    title: detail.title,
+    publishedAt: detail.publishedAt,
+    duration: detail.duration,
+    isShort
+   });
+  }
+ }
+
+ videoCache[cacheKey]=enriched;
+ return enriched;
+}
+
+function formatDuration(sec){
+ const h=Math.floor(sec/3600);
+ const m=Math.floor((sec%3600)/60);
+ const s=sec%60;
+ if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+ return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+async function pickVideo(){
+ if(!selected) return;
+ $('pick').disabled=true;
+ $('again').disabled=true;
+
+ try{
+  const maxLimit=parseInt($('maxfetch').value, 10);
+  const excludeShorts=$('exshorts').checked;
+  const allVideos=await fetchAllChannelVideos(selected, maxLimit);
+
+  const pool = excludeShorts ? allVideos.filter(v=>!v.isShort) : allVideos;
+  if(!pool.length){
+   $('pickstatus').textContent='条件に一致する動画がありませんでした（「Shortsを除外する」のチェックを外して試してください）。';
+   return;
+  }
+
+  const chosen=pool[Math.floor(Math.random()*pool.length)];
+  const dateStr=chosen.publishedAt ? new Date(chosen.publishedAt).toLocaleDateString('ja-JP') : '';
+
+  $('video').style.display='block';
+  $('ytframe').src=`https://www.youtube.com/embed/${chosen.id}?autoplay=1&rel=0`;
+  $('title').textContent=chosen.title;
+  $('meta').textContent=`投稿日: ${dateStr} | 再生時間: ${formatDuration(chosen.duration)}${chosen.isShort?' (Shorts)':''}`;
+  $('link').href=`https://www.youtube.com/watch?v=${chosen.id}`;
+
+  $('pickstatus').textContent=`全 ${allVideos.length} 本中、対象 ${pool.length} 本からランダムに選ばれました！`;
+ }catch(e){
+  $('pickstatus').textContent='エラー: '+e.message;
+ }finally{
+  $('pick').disabled=false;
+  $('again').disabled=false;
  }
 }
 
-function updateVideoInfo(){
- if(!player || !player.getVideoData)return;
- const data=player.getVideoData();
- const pl=player.getPlaylist();
- if(data && data.video_id){
-  $('title').textContent=data.title || 'タイトル取得済み';
-  $('link').href=`https://www.youtube.com/watch?v=${data.video_id}`;
-  const countText=pl ? `全 ${pl.length} 本の中からランダムに選ばれました！` : 'ランダムに選ばれました！';
-  $('pickstatus').textContent=countText;
- }
-}
-
-$('pick').onclick=pickRandomVideo;
-$('again').onclick=()=>{
- if(!player)return;
- const pl=player.getPlaylist();
- if(pl && pl.length){
-  const idx=Math.floor(Math.random()*pl.length);
-  player.playVideoAt(idx);
- }else{
-  player.nextVideo();
- }
- setTimeout(updateVideoInfo, 500);
-};
+$('pick').onclick=pickVideo;
+$('again').onclick=pickVideo;
 
 render();
 </script></body></html>
